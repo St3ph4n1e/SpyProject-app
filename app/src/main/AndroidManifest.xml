@@ -36,6 +36,11 @@
         </activity>
 
         <service android:name="org.eclipse.paho.android.service.MqttService" />
+        <receiver android:name=".MainActivity"
+            android:exported="true">
+            <!-- Intent filters and other receiver attributes -->
+        </receiver>
+
     </application>
 
 </manifest>
