@@ -1,6 +1,6 @@
 
 package com.example.spyproject
-
+import android.content.Context
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.util.Log
@@ -10,19 +10,25 @@ import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.IMqttActionListener
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
 import org.eclipse.paho.client.mqttv3.IMqttToken
-import org.eclipse.paho.client.mqttv3.MqttCallbackExtended
+import org.eclipse.paho.client.mqttv3.MqttCallback
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttException
 import org.eclipse.paho.client.mqttv3.MqttMessage
 
+
 class MainActivity : AppCompatActivity() {
 
     lateinit var binding: ActivityMainBinding
-    private val clientId = "AndroidClient"
     private var countDownTimer: CountDownTimer? = null
     private val initialTimeInMillis: Long = 60000 // Temps initial en millisecondes (60 secondes ici)
     private lateinit var mqttAndroidClient: MqttAndroidClient
     private val serverUri = "ws://test.mosquitto.org:8080"
+    private lateinit var mqttClient: MqttAndroidClient
+    // TAG
+    companion object {
+        const val TAG = "AndroidMqttClient"
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,57 +36,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.chrono.format = "%s"
-        //startCountdown()
+        startCountdown()
+        connect(this)
 
-        mqttAndroidClient = MqttAndroidClient(applicationContext, serverUri, clientId)
 
-        mqttAndroidClient.setCallback(object : MqttCallbackExtended {
-            override fun connectComplete(reconnect: Boolean, serverURI: String) {
-                if (reconnect) {
-                    Log.d("MQTT","Reconnexion réussie à $serverURI")
-                } else {
-                    // Connexion initiale réussie
-                    Log.d("MQTT","Connexion initiale réussie à $serverURI")
-                    subscribeToTopic("presence")
-                }
-            }
-
-            override fun connectionLost(cause: Throwable) {
-                Log.e("MQTT", "Connexion perdue : ${cause.message}")
-            }
-
-            override fun messageArrived(topic: String, message: MqttMessage) {
-                val payload = String(message.payload)
-                Log.d("MQTT", "Nouveau message reçu sur le sujet $topic : $payload")
-            }
-
-            override fun deliveryComplete(token: IMqttDeliveryToken) {
-                Log.d("MQTT", "Message délivré : ${token.message}")
-            }
-        })
-
-        connectToMqtt()
-    }
-
-    private fun connectToMqtt() {
-        val mqttConnectOptions = MqttConnectOptions()
-        mqttConnectOptions.isCleanSession = true
-
-        try {
-            mqttAndroidClient.connect(mqttConnectOptions, null, object : IMqttActionListener {
-                override fun onSuccess(asyncActionToken: IMqttToken) {
-                    // Cette méthode ne sera pas appelée directement. La connexion complète est gérée par MqttCallbackExtended.
-                    Log.d("MQTT", "Connexion réussie : $asyncActionToken")
-                }
-
-                override fun onFailure(asyncActionToken: IMqttToken, exception: Throwable) {
-                    Log.e("MQTT", "Échec de la connexion : ${asyncActionToken.exception}")
-                    exception.printStackTrace()
-                }
-            })
-        } catch (e: Exception) {
-            Log.e("MQTT", "Exception lors de la tentative de connexion : ${e.message}", e)
-        }
     }
 
     private fun startCountdown() {
@@ -102,26 +61,98 @@ class MainActivity : AppCompatActivity() {
         countDownTimer?.start()
     }
 
+    fun connect(context: Context) {
+        val serverURI = "tcp://broker.emqx.io:1883"
+        mqttClient = MqttAndroidClient(context, serverURI, "kotlin_client")
+        mqttClient.setCallback(object : MqttCallback {
+            override fun messageArrived(topic: String?, message: MqttMessage?) {
+                Log.d(TAG, "Receive message: ${message.toString()} from topic: $topic")
+            }
+
+            override fun connectionLost(cause: Throwable?) {
+                Log.d(TAG, "Connection lost ${cause.toString()}")
+            }
+
+            override fun deliveryComplete(token: IMqttDeliveryToken?) {
+
+            }
+        })
+        val options = MqttConnectOptions()
+        try {
+            mqttClient.connect(options, null, object : IMqttActionListener {
+                override fun onSuccess(asyncActionToken: IMqttToken?) {
+                    Log.d(TAG, "Connection success")
+                }
+
+                override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
+                    Log.d(TAG, "Connection failure")
+                }
+            })
+        } catch (e: MqttException) {
+            e.printStackTrace()
+        }
+
+    }
+
+
+    fun subscribe(topic: String, qos: Int = 1) {
+        try {
+            mqttClient.subscribe(topic, qos, null, object : IMqttActionListener {
+                override fun onSuccess(asyncActionToken: IMqttToken?) {
+                    Log.d(TAG, "Subscribed to $topic")
+                }
+
+                override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
+                    Log.d(TAG, "Failed to subscribe $topic")
+                }
+            })
+        } catch (e: MqttException) {
+            e.printStackTrace()
+        }
+    }
+
+    fun publish(topic: String, msg: String, qos: Int = 1, retained: Boolean = false) {
+        try {
+            val message = MqttMessage()
+            message.payload = msg.toByteArray()
+            message.qos = qos
+            message.isRetained = retained
+            mqttClient.publish(topic, message, null, object : IMqttActionListener {
+                override fun onSuccess(asyncActionToken: IMqttToken?) {
+                    Log.d(TAG, "$msg published to $topic")
+                }
+
+                override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
+                    Log.d(TAG, "Failed to publish $msg to $topic")
+                }
+            })
+        } catch (e: MqttException) {
+            e.printStackTrace()
+        }
+    }
+
+    fun disconnect() {
+        try {
+            mqttClient.disconnect(null, object : IMqttActionListener {
+                override fun onSuccess(asyncActionToken: IMqttToken?) {
+                    Log.d(TAG, "Disconnected")
+                }
+
+                override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
+                    Log.d(TAG, "Failed to disconnect")
+                }
+            })
+        } catch (e: MqttException) {
+            e.printStackTrace()
+        }
+    }
+
+
+
     override fun onDestroy() {
         super.onDestroy()
         // Assurez-vous d'annuler le CountDownTimer lors de la destruction de l'activité
         countDownTimer?.cancel()
+
     }
-
-    private fun subscribeToTopic(topic: String) {
-        try {
-            mqttAndroidClient.subscribe(topic, 0, null, object : IMqttActionListener {
-                override fun onSuccess(asyncActionToken: IMqttToken) {
-                    Log.d("MQTT", "Abonnement réussi au sujet : $topic")
-                }
-
-                override fun onFailure(asyncActionToken: IMqttToken, exception: Throwable) {
-                    Log.e("MQTT", "Échec de l'abonnement au sujet : $topic, Exception : ${exception.message}")
-                }
-            })
-        } catch (e: MqttException) {
-            Log.e("MQTT", "Exception lors de l'abonnement au sujet : $topic, Exception : ${e.message}")
-        }
-    }
-
 }

@@ -1,4 +1,4 @@
-package com.example.spyproject.Game
+package com.example.spyproject
 
 import android.content.Intent
 import android.os.Bundle
