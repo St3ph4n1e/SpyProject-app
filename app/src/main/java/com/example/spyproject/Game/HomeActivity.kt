@@ -18,7 +18,8 @@ class HomeActivity : AppCompatActivity() {
         // Écouteur de clic pour le bouton
         binding.startButton.setOnClickListener {
             // Lorsque le bouton est cliqué, lancer l'activité MainActivity
-            startActivity(Intent(this, MainActivity::class.java))
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
         }
     }
 }
