@@ -3,7 +3,6 @@ package com.example.spyproject
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.example.spyproject.MainActivity
 import com.example.spyproject.databinding.ActivityHomeBinding
 
 class HomeActivity : AppCompatActivity() {
