@@ -1,0 +1,14 @@
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <corners android:radius="20dp" /> <!-- Ajoutez le border radius souhaité ici -->
+            <solid android:color="#007b99" /> <!-- Couleur foncée pour le bouton pressé -->
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="20dp" /> <!-- Ajoutez le border radius souhaité ici -->
+            <solid android:color="#272525" /> <!-- Couleur normale du bouton -->
+        </shape>
+    </item>
+</selector>
