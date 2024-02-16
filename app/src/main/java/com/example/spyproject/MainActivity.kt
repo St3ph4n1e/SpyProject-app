@@ -146,10 +146,11 @@ class MyMqttCallback(private val context: Context) : MqttCallback {
                     (context as? MainActivity)?.runOnUiThread {
                         (context as? MainActivity)?.startCountdown()
                     }
+                    (context as? MainActivity)?.binding?.instructionTextView?.text = "Votre mission, si vous l'acceptez \n est de sortir de cette pièce \n avant la fin du temps imparti."
                     chronoActive = true
                 }
 
-                (context as? MainActivity)?.binding?.instructionTextView?.text = "Votre mission, si vous l'acceptez \n est de sortir de cette pièce \n avant la fin du temps imparti."
+
 
 
             }
@@ -160,6 +161,8 @@ class MyMqttCallback(private val context: Context) : MqttCallback {
                     // Afficher le message "Bien joué"
                     (context as? MainActivity)?.binding?.chrono?.text = "Bien joué"
                     (context as? MainActivity)?.binding?.instructionTextView?.text = "Mission accomplie"
+
+                    MqttManager.publish("Spyproject", "FinduGame")
 
                     val handler = Handler(Looper.getMainLooper())
                     handler.postDelayed({
@@ -254,6 +257,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onFinish() {
                 binding.chrono.text = "Game Over 💣"
+                MqttManager.publish("Spyproject", "FinduGame")
                 val handler = Handler(Looper.getMainLooper())
                 handler.postDelayed({
                     val intent = Intent(this@MainActivity, HomeActivity::class.java)
