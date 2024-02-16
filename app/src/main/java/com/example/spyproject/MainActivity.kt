@@ -20,8 +20,8 @@ import java.util.UUID
 object MqttManager {
 
     private const val brokerUrl = "tcp://test.mosquitto.org:1883"
-    private const val clientId = "votre_client_id"
-    private const val topicToSubscribe = "votre_topic" // Changez cela avec le topic auquel vous souhaitez vous abonner
+   // private const val clientId = "votre_client_id"
+    private const val topicToSubscribe = "Spyproject" // Changez cela avec le topic auquel vous souhaitez vous abonner
 
     private lateinit var internalMqttClient: MqttClient
 
@@ -55,8 +55,6 @@ object MqttManager {
             e.printStackTrace()
         }
     }
-
-
 
 
     // Fonction pour s'abonner à un topic
@@ -112,12 +110,37 @@ class MyMqttCallback : MqttCallback {
         // Gérer les messages reçus
         val payload = message?.payload?.toString(Charsets.UTF_8)
         Log.d("MQTT", "Message reçu sur le topic $topic : $payload")
+        // Appeler une méthode pour traiter le message reçu
+        handleMessage(payload)
     }
+
 
     override fun deliveryComplete(token: IMqttDeliveryToken?) {
         // Gérer la livraison complète du message
         Log.d("MQTT", "Livraison complète du message")
     }
+
+    // Ajoutez une méthode pour traiter les messages reçus
+    private fun handleMessage(message: String?) {
+        // Vérifiez le contenu du message et effectuez une action en conséquence
+        when (message) {
+            "Hello" -> {
+                // Faire quelque chose lorsque le message est "Hello"
+                // Par exemple, afficher un Toast
+
+            }
+            "Goodbye" -> {
+                // Faire quelque chose lorsque le message est "Goodbye"
+                // Par exemple, afficher un Toast
+
+            }
+            else -> {
+                // Faire quelque chose pour les autres messages (non gérés ici)
+            }
+        }
+    }
+
+
 }
 
 class MainActivity : AppCompatActivity() {
@@ -132,7 +155,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.chrono.format = "%s"
-        startCountdown()
+//        startCountdown()
 
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val networkInfo = connectivityManager.activeNetworkInfo
@@ -141,6 +164,7 @@ class MainActivity : AppCompatActivity() {
             try {
                 Log.d("MainActivity", "Avant la connexion MQTT")
                 MqttManager.connect(this)
+                MqttManager.setCallback(MyMqttCallback())
                 Log.d("MainActivity", "Après la connexion MQTT")
             } catch (e: MqttException) {
                 e.printStackTrace()
@@ -151,10 +175,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Publier un message
-        MqttManager.publish("topic", "Hello MQTT!")
+        MqttManager.publish("Spyproject", "Hello MQTT!")
 
         // Souscrire à un topic
-        MqttManager.subscribe("topic")
+        MqttManager.subscribe("Spyproject")
+
+
+
+
     }
 
     private fun startCountdown() {
@@ -166,7 +194,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onFinish() {
-                binding.chrono.text = "Terminé!"
+                binding.chrono.text = "Game Over 💣"
             }
         }
 

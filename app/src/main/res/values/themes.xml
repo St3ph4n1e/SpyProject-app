@@ -2,7 +2,13 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.SpyProject" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">#737373</item>
+        <item name="colorPrimaryDark">#737373</item>
+        <item name="colorAccent">#737373</item>
+    </style>
+
+    <style name="AppTheme" parent="Base.Theme.SpyProject">
+        <!-- Autres attributs de style -->
     </style>
 
     <style name="Theme.SpyProject" parent="Base.Theme.SpyProject" />
