@@ -1,6 +1,7 @@
 package com.example.spyproject
 
 import android.content.Context
+import android.content.Intent
 import android.net.ConnectivityManager
 import android.os.Bundle
 import android.os.CountDownTimer
@@ -15,6 +16,12 @@ import org.eclipse.paho.client.mqttv3.MqttException
 import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence
 import java.util.UUID
+import android.os.Handler
+import android.os.Looper
+import android.view.View
+
+
+
 
 
 // MqttManager
@@ -102,10 +109,13 @@ object MqttManager {
 }
 
 class MyMqttCallback(private val context: Context) : MqttCallback {
+
+    private var chronoActive = false
     override fun connectionLost(cause: Throwable?) {
         // Gérer la perte de connexion
-        Log.e("MQTT", "Connexion perdue avec le broker MQTT")
+        Log.e("MQTT", "Connexion perdue avec le broker MQTT. Cause: ${cause?.message}")
     }
+
 
     override fun messageArrived(topic: String?, message: MqttMessage?) {
         // Gérer les messages reçus
@@ -127,8 +137,16 @@ class MyMqttCallback(private val context: Context) : MqttCallback {
         when (message) {
             "start chrono" -> {
                 Log.i("MQTT", "Gestion du message")
-                (context as? MainActivity)?.runOnUiThread {
-                    (context as? MainActivity)?.startCountdown()
+
+
+
+                // Vérifier si le chrono n'est pas déjà actif
+                if (!chronoActive) {
+                    // Rendre le Chronometer visible
+                    (context as? MainActivity)?.runOnUiThread {
+                        (context as? MainActivity)?.startCountdown()
+                    }
+                    chronoActive = true
                 }
 
                 (context as? MainActivity)?.binding?.instructionTextView?.text = "Votre mission, si vous l'acceptez \n est de sortir de cette pièce \n avant la fin du temps imparti."
@@ -141,6 +159,13 @@ class MyMqttCallback(private val context: Context) : MqttCallback {
                     (context as? MainActivity)?.countDownTimer?.cancel()
                     // Afficher le message "Bien joué"
                     (context as? MainActivity)?.binding?.chrono?.text = "Bien joué"
+                    (context as? MainActivity)?.binding?.instructionTextView?.text = "Mission accomplie"
+
+                    val handler = Handler(Looper.getMainLooper())
+                    handler.postDelayed({
+                        val intent = Intent(context, HomeActivity::class.java)
+                        context.startActivity(intent)
+                    }, 7000) //
                 }
             }
             "Code Correct" -> {
@@ -209,6 +234,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     public fun startCountdown() {
+       binding.chrono.visibility = View.VISIBLE
         countDownTimer = object : CountDownTimer(initialTimeInMillis, 1000) {
             override fun onTick(millisUntilFinished: Long) {
                 val minutes = millisUntilFinished / 60000
@@ -218,7 +244,13 @@ class MainActivity : AppCompatActivity() {
 
             override fun onFinish() {
                 binding.chrono.text = "Game Over 💣"
+                val handler = Handler(Looper.getMainLooper())
+                handler.postDelayed({
+                    val intent = Intent(this@MainActivity, HomeActivity::class.java)
+                    startActivity(intent)
+                }, 7000) // Délai de 10 secondes (10000 millisecondes)
             }
+
         }
 
         countDownTimer?.start()

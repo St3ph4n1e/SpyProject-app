@@ -12,7 +12,7 @@ tools:context=".MainActivity">
 android:id="@+id/chrono"
 android:layout_width="wrap_content"
 android:layout_height="wrap_content"
-android:text="00:00"
+android:text=""
 android:textSize="32sp"
 android:textStyle="bold"
 android:layout_marginTop="32dp"
@@ -23,7 +23,8 @@ app:layout_constraintVertical_bias="0.1"
 android:layout_marginBottom="32dp"
 app:layout_constraintBottom_toTopOf="@+id/instructionTextView"
 android:textColor="#FFD700"
-android:format="[%s]"
+android:visibility="invisible"
+
     />
 
 <TextView
