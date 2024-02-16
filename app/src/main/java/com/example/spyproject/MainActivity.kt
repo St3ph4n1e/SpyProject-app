@@ -201,9 +201,19 @@ class MainActivity : AppCompatActivity() {
         binding.chrono.format = "%s"
 //        startCountdown()
 
-        binding.beginButton.setOnClickListener{
+        binding.beginButton.setOnClickListener {
             binding.instructionTextView.text = "Le code est ABC1DEF"
+
+            val handler = Handler(Looper.getMainLooper())
+
+            // Exécutez le code sur le thread principal
+            (binding.root.context as? MainActivity)?.runOnUiThread {
+                handler.postDelayed({
+                    binding.beginButton.visibility = View.INVISIBLE
+                }, 4000)
+            }
         }
+
 
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val networkInfo = connectivityManager.activeNetworkInfo
