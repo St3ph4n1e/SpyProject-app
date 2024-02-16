@@ -16,6 +16,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence
 import java.util.UUID
 
+
 // MqttManager
 object MqttManager {
 
@@ -100,7 +101,7 @@ object MqttManager {
     }
 }
 
-class MyMqttCallback : MqttCallback {
+class MyMqttCallback(private val context: Context) : MqttCallback {
     override fun connectionLost(cause: Throwable?) {
         // Gérer la perte de connexion
         Log.e("MQTT", "Connexion perdue avec le broker MQTT")
@@ -124,14 +125,29 @@ class MyMqttCallback : MqttCallback {
     private fun handleMessage(message: String?) {
         // Vérifiez le contenu du message et effectuez une action en conséquence
         when (message) {
-            "Hello" -> {
-                // Faire quelque chose lorsque le message est "Hello"
-                // Par exemple, afficher un Toast
+            "start chrono" -> {
+                Log.i("MQTT", "Gestion du message")
+                (context as? MainActivity)?.runOnUiThread {
+                    (context as? MainActivity)?.startCountdown()
+                }
+
+                (context as? MainActivity)?.binding?.instructionTextView?.text = "Votre mission, si vous l'acceptez \n est de sortir de cette pièce \n avant la fin du temps imparti."
+
 
             }
-            "Goodbye" -> {
-                // Faire quelque chose lorsque le message est "Goodbye"
-                // Par exemple, afficher un Toast
+            "End Game" -> {
+                (context as? MainActivity)?.runOnUiThread {
+                    // Arrêter le countdown timer
+                    (context as? MainActivity)?.countDownTimer?.cancel()
+                    // Afficher le message "Bien joué"
+                    (context as? MainActivity)?.binding?.chrono?.text = "Bien joué"
+                }
+            }
+            "Code Correct" -> {
+                Log.i("MQTT", "Gestion du message Digicode")
+
+                (context as? MainActivity)?.binding?.instructionTextView?.text = "Courez vers la sortie"
+
 
             }
             else -> {
@@ -141,12 +157,15 @@ class MyMqttCallback : MqttCallback {
     }
 
 
+
+
+
 }
 
 class MainActivity : AppCompatActivity() {
 
     lateinit var binding: ActivityMainBinding
-    private var countDownTimer: CountDownTimer? = null
+    var countDownTimer: CountDownTimer? = null
     private val initialTimeInMillis: Long = 60000 // Temps initial en millisecondes (60 secondes ici)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -157,6 +176,10 @@ class MainActivity : AppCompatActivity() {
         binding.chrono.format = "%s"
 //        startCountdown()
 
+        binding.beginButton.setOnClickListener{
+            binding.instructionTextView.text = "Le code est ABC1DEF"
+        }
+
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val networkInfo = connectivityManager.activeNetworkInfo
 
@@ -164,7 +187,7 @@ class MainActivity : AppCompatActivity() {
             try {
                 Log.d("MainActivity", "Avant la connexion MQTT")
                 MqttManager.connect(this)
-                MqttManager.setCallback(MyMqttCallback())
+                MqttManager.setCallback(MyMqttCallback(this))
                 Log.d("MainActivity", "Après la connexion MQTT")
             } catch (e: MqttException) {
                 e.printStackTrace()
@@ -185,7 +208,7 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun startCountdown() {
+    public fun startCountdown() {
         countDownTimer = object : CountDownTimer(initialTimeInMillis, 1000) {
             override fun onTick(millisUntilFinished: Long) {
                 val minutes = millisUntilFinished / 60000
@@ -206,4 +229,6 @@ class MainActivity : AppCompatActivity() {
         countDownTimer?.cancel()
         MqttManager.disconnect()
     }
+
+
 }
